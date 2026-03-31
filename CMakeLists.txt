@@ -33,6 +33,7 @@ set(PROJECT_DEPS
   tf2_ros
   tf2_geometry_msgs
   adore_dynamics_conversions
+  adore_map_conversions
   sensor_msgs
   yaml_cpp_vendor
   yaml-cpp

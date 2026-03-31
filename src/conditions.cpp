@@ -19,73 +19,68 @@ namespace conditions
 {
 
 
-bool can_drive_mission( 
-                const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, 
-                const double& time_now )
+bool
+can_drive_mission( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, const double& time_now )
 {
-    if ( !vehicle_state_dynamic.has_value() )
-        return false;
+  if( !vehicle_state_dynamic.has_value() )
+    return false;
 
-    if ( time_now - vehicle_state_dynamic.value().time > MAXIMUM_VEHICLE_STATE_DYNAMIC_AGE_SECONDS ) // If the message is more than one second old 
-        return false;
+  if( time_now - vehicle_state_dynamic.value().time > MAXIMUM_VEHICLE_STATE_DYNAMIC_AGE_SECONDS ) // If the message is more than one second
+                                                                                                  // old
+    return false;
 
-    // @TODO, add covarianve of estimate
+  // @TODO, add covarianve of estimate
 
-    return true;
+  return true;
 }
 
-bool has_mission( 
-                const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, 
-                const std::optional<map::Route>& route 
-            )
+bool
+has_mission( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, const std::optional<map::Route>& route )
 {
-    if( !route.has_value() || !vehicle_state_dynamic.has_value() )
-        return false;
+  if( !route.has_value() || !vehicle_state_dynamic.has_value() )
+    return false;
 
-    double remaining = route->get_length() - route->get_s( *vehicle_state_dynamic );
-    return remaining > MINIMUM_ROUTE_LENGHTH_METERS;
+  double remaining = route->get_length() - route->get_s( *vehicle_state_dynamic ).value();
+  return remaining > MINIMUM_ROUTE_LENGHTH_METERS;
 }
 
-bool need_remote_operator_assitance( 
-                                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, 
-                                        const std::map<std::string, math::Polygon2d>& caution_zones 
-                                    )
+bool
+need_remote_operator_assitance( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
+                                const std::map<std::string, math::Polygon2d>&       caution_zones )
 {
-    if ( !vehicle_state_dynamic.has_value() )
-        return false;
+  if( !vehicle_state_dynamic.has_value() )
+    return false;
 
-    // check if in a caution zone
-    return std::any_of( caution_zones.begin(), caution_zones.end(),
-                        [&]( const auto& zone ) { return zone.second.point_inside( *vehicle_state_dynamic ); } );
+  // check if in a caution zone
+  return std::any_of( caution_zones.begin(), caution_zones.end(),
+                      [&]( const auto& zone ) { return zone.second.point_inside( *vehicle_state_dynamic ); } );
 }
 
-bool needs_to_avoid_safety_corridor(
-                                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, 
-                                        const std::optional<adore_ros2_msgs::msg::SafetyCorridor>& safety_corridor 
-)
+bool
+needs_to_avoid_safety_corridor( const std::optional<dynamics::VehicleStateDynamic>&        vehicle_state_dynamic,
+                                const std::optional<adore_ros2_msgs::msg::SafetyCorridor>& safety_corridor )
 {
-    if ( !vehicle_state_dynamic.has_value() || !safety_corridor.has_value() )
-        return false;
+  if( !vehicle_state_dynamic.has_value() || !safety_corridor.has_value() )
+    return false;
 
-    // @TODO, needs to do a check if it is inside of the safety corridor
+  // @TODO, needs to do a check if it is inside of the safety corridor
 
-    return true;
+  return true;
 }
 
-bool has_valid_remote_reference_trajectory( 
-                                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
-                                        const std::optional<dynamics::Trajectory>& reference_trajectory )
+bool
+has_valid_remote_reference_trajectory( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
+                                       const std::optional<dynamics::Trajectory>&          reference_trajectory )
 {
-    if( !vehicle_state_dynamic.has_value() || !reference_trajectory.has_value() )
-        return false;
+  if( !vehicle_state_dynamic.has_value() || !reference_trajectory.has_value() )
+    return false;
 
-    if( reference_trajectory.value().states.size() < MININUM_REFERENCE_TRAJECTORY_SIZE )
-        return false;
+  if( reference_trajectory.value().states.size() < MININUM_REFERENCE_TRAJECTORY_SIZE )
+    return false;
 
-    double age = vehicle_state_dynamic.value().time - reference_trajectory.value().states.front().time;
-    return age <= MAXIMUM_REFERENCE_TRAJECTORY_AGE_SECONDS;
+  double age = vehicle_state_dynamic.value().time - reference_trajectory.value().states.front().time;
+  return age <= MAXIMUM_REFERENCE_TRAJECTORY_AGE_SECONDS;
 }
-
 
 // bool
 // safety_corridor_present( const Domain& d, const ConditionParams& )
@@ -105,11 +100,11 @@ bool has_valid_remote_reference_trajectory(
 //   if( !d.reference_trajectory )
 //     return false;
 
-//   if( d.reference_trajectory->states.size() < p.min_ref_traj_size )
-//     return false;
+// if( d.reference_trajectory->states.size() < p.min_ref_traj_size )
+//   return false;
 
-//   double age = d.vehicle_state->time - d.reference_trajectory->states.front().time;
-//   return age <= p.max_ref_traj_age;
+// double age = d.vehicle_state->time - d.reference_trajectory->states.front().time;
+// return age <= p.max_ref_traj_age;
 // }
 
 
