@@ -83,6 +83,36 @@ namespace behavior
         return trajectory_and_signal;
     }
 
+    Behavior driving_unstructured(
+                                planner::HybridAStarPlanner& planner,
+                                const dynamics::VehicleStateDynamic& vehicle_state_dynamic,
+                                const map::Route& route,
+                                const dynamics::TrafficParticipantSet& traffic_participants,
+                                const math::Polygon2d& drivable_area
+                           )
+    {
+        Behavior trajectory_and_signal;
+
+        // planner.set_goal( 605050.90, 5795017.68 );
+        planner.set_goal( route, drivable_area, vehicle_state_dynamic );
+        rclcpp::Clock clock;
+        double now_time = clock.now().seconds();
+        auto                 result             = planner.plan_trajectory( vehicle_state_dynamic, traffic_participants, drivable_area, route );
+        if( !result.trajectory.has_value() )
+        {
+            std::cerr << "no trajectory planned to reach the goal" << std::endl;
+            planner::TrajectoryPlanner emergency_planner;
+            return behavior::emergency( emergency_planner, vehicle_state_dynamic );
+        }
+        dynamics::Trajectory planned_trajectory = result.trajectory.value();
+        planned_trajectory.adjust_start_time( vehicle_state_dynamic.time );
+        planned_trajectory.label = "Unstructured Planner";
+        trajectory_and_signal.modified_route = map::conversions::to_ros_msg( result.modified_route );
+        trajectory_and_signal.trajectory = dynamics::conversions::to_ros_msg( planned_trajectory );
+
+        return trajectory_and_signal;
+    }
+
     Behavior driving_mission_following_managed(
                             planner::TrajectoryPlanner& planner,
                             const dynamics::VehicleStateDynamic& vehicle_state_dynamic,  

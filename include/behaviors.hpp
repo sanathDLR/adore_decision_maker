@@ -28,10 +28,12 @@
 #include "planning/trajectory_planner.hpp"
 
 #include "adore_dynamics_conversions.hpp"
+#include "adore_map_conversions.hpp"
 #include "adore_ros2_msgs/msg/weather.hpp"
 #include <adore_math/polygon.h>
 
 #include "planning/trajectory_planner.hpp"
+#include "planning/unstructured_planner.hpp"
 #include "planning/planning_helpers.hpp"
 #include "adore_ros2_msgs/msg/odd.hpp"
 
@@ -44,6 +46,7 @@ namespace behavior
         adore_ros2_msgs::msg::Trajectory trajectory;
         std::optional<adore_ros2_msgs::msg::Trajectory> alternative_trajectory;
         adore_ros2_msgs::msg::VehicleSignals signals;
+        adore_ros2_msgs::msg::Route modified_route;
     };
 
     const double MAX_DISTANCE_TO_LAST_TRAJECTORY_POINT_BEFORE_RETURNING_TO_REMOTE_OPERATIONS_DRIVING = 1.0;
@@ -55,6 +58,14 @@ namespace behavior
                                 const dynamics::TrafficParticipantSet& traffic_participants,
                                 const adore_ros2_msgs::msg::TrafficSignals& traffic_signals,
                                 const std::optional<adore_ros2_msgs::msg::Weather>& weather
+    );
+
+    Behavior driving_unstructured(
+                                planner::HybridAStarPlanner& planner,
+                                const dynamics::VehicleStateDynamic& vehicle_state_dynamic,
+                                const map::Route& route,
+                                const dynamics::TrafficParticipantSet& traffic_participants,
+                                const math::Polygon2d& drivable_area 
     );
 
     Behavior driving_mission_following_managed(

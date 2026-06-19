@@ -19,6 +19,7 @@
 
 #include "dynamics/comfort_settings.hpp"
 #include "planning/trajectory_planner.hpp"
+#include "planning/unstructured_planner.hpp"
 #include "adore_ros2_msgs/msg/caution_zone.hpp"
 #include "adore_ros2_msgs/msg/odd.hpp"
 #include "adore_ros2_msgs/msg/traffic_participant.hpp"
@@ -56,6 +57,7 @@ private:
 
   // Remote operations subscribers
   rclcpp::Subscription<adore_ros2_msgs::msg::CautionZone>::SharedPtr subscriber_caution_zones;
+  rclcpp::Subscription<adore_ros2_msgs::msg::CautionZone>::SharedPtr subscriber_unstructured_drivable_area;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_remote_operator_drive_approval;
   rclcpp::Subscription<adore_ros2_msgs::msg::Trajectory>::SharedPtr subscriber_suggested_remote_operator_trajectory;
   // rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr       subscriber_automation_toggle;
@@ -70,6 +72,7 @@ private:
 
   // Planning
   planner::TrajectoryPlanner planner; // @TODO Think most of these can be removed
+  planner::HybridAStarPlanner unstructured_planner;
   dynamics::PhysicalVehicleParameters physical_vehicle_parameters;
   std::shared_ptr<dynamics::ComfortSettings> comfort_settings;
 
@@ -89,6 +92,7 @@ private:
 
   dynamics::TrafficParticipantSet traffic_participants;
   std::map<std::string, math::Polygon2d> caution_zones;
+  math::Polygon2d unstructured_drivable_area;
  
   // DecisionParams               params;
   rclcpp::TimerBase::SharedPtr timer;
