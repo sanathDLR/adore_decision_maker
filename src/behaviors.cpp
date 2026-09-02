@@ -149,16 +149,17 @@ namespace behavior
                                 const dynamics::VehicleStateDynamic& vehicle_state_dynamic,
                                 const map::Route& route,
                                 const dynamics::TrafficParticipantSet& traffic_participants,
-                                const math::Polygon2d& drivable_area
+                                const adore_ros2_msgs::msg::GoalPoint& evacuation_point,
+                                const std::optional<math::Polygon2d>& drivable_area
                            )
     {
         Behavior trajectory_and_signal;
 
-        // planner.set_goal( 605050.90, 5795017.68 );
-        planner.set_goal( route, drivable_area, vehicle_state_dynamic );
+        planner.set_goal( 605050.90, 5795017.68 );
+        std::cerr << "evacuation point x: " << evacuation_point.x_position << " y: " << evacuation_point.y_position << std::setprecision(16) << std::endl;
         rclcpp::Clock clock;
         double now_time = clock.now().seconds();
-        auto                 result             = planner.plan_trajectory( vehicle_state_dynamic, traffic_participants, drivable_area, route );
+        auto                 result             = planner.plan_trajectory( vehicle_state_dynamic, traffic_participants, std::nullopt );
         if( !result.trajectory.has_value() )
         {
             std::cerr << "no trajectory planned to reach the goal" << std::endl;

@@ -19,6 +19,7 @@
 #include "adore_ros2_msgs/msg/physical_vehicle_parameters.hpp"
 #include "adore_ros2_msgs/msg/remote_operation_status.hpp"
 #include "adore_ros2_msgs/msg/safety_corridor.hpp"
+#include "adore_ros2_msgs/msg/goal_point.hpp"
 #include <adore_math/polygon.h>
 #include "open_odd_ros2_msgs/msg/odd_evaluation.hpp"
 #include "adore_ros2_msgs/msg/remote_operation_status.hpp"
@@ -41,7 +42,7 @@ namespace adore
         bool needs_to_avoid_safety_corridor( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, const std::optional<adore_ros2_msgs::msg::SafetyCorridor>& safety_corridor );
         bool can_drive_managed( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, const double& time_now, const std::optional<math::Polygon2d>& managed_zone, const std::optional<dynamics::Trajectory>& managed_trajectory);
         bool odd_conditions_satisfied( const std::optional<open_odd_ros2_msgs::msg::OddEvaluation>& odd, const double& time_now );
-        bool must_drive_unstructured( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, const math::Polygon2d& unstructured_drivable_area );
+        bool must_drive_unstructured( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, const std::optional<math::Polygon2d>& unstructured_drivable_area, const std::optional<adore_ros2_msgs::msg::GoalPoint>& evacuation_point );
         bool remote_operations_is_available( const std::optional<adore_ros2_msgs::msg::RemoteOperationStatus>& remote_operation_status, const double& time_now );
         bool passenger_wants_vehicle_to_stop( const bool& passenger_emergency_stop, const bool& resume_ride_requested, const double& time_now );
 

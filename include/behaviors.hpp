@@ -21,6 +21,7 @@
 
 #include "adore_ros2_msgs/msg/trajectory.hpp"
 #include "adore_ros2_msgs/msg/route.hpp"
+#include "adore_ros2_msgs/msg/goal_point.hpp"
 #include "adore_ros2_msgs/msg/vehicle_signals.hpp"
 #include "adore_ros2_msgs/msg/traffic_signal.hpp"
 #include "adore_ros2_msgs/msg/traffic_signals.hpp"
@@ -73,7 +74,8 @@ namespace behavior
                                 const dynamics::VehicleStateDynamic& vehicle_state_dynamic,
                                 const map::Route& route,
                                 const dynamics::TrafficParticipantSet& traffic_participants,
-                                const math::Polygon2d& drivable_area 
+                                const adore_ros2_msgs::msg::GoalPoint& evacuation_point,
+                                const std::optional<math::Polygon2d>& drivable_area 
     );
 
     Behavior driving_mission_following_managed(

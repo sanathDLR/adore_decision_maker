@@ -21,6 +21,7 @@
 #include "planning/trajectory_planner.hpp"
 #include "adore_ros2_msgs/msg/caution_zone.hpp"
 #include "adore_ros2_msgs/msg/route.hpp"
+#include "adore_ros2_msgs/msg/goal_point.hpp"
 #include "adore_ros2_msgs/msg/traffic_participant.hpp"
 #include "adore_ros2_msgs/msg/traffic_participant_set.hpp"
 #include "adore_ros2_msgs/msg/weather.hpp"
@@ -76,6 +77,7 @@ private:
   // Remote operations subscribers
   rclcpp::Subscription<adore_ros2_msgs::msg::CautionZone>::SharedPtr subscriber_caution_zones;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_remote_operator_drive_approval;
+  rclcpp::Subscription<adore_ros2_msgs::msg::GoalPoint>::SharedPtr subscriber_evacuation_point;
   rclcpp::Subscription<adore_ros2_msgs::msg::Trajectory>::SharedPtr subscriber_suggested_remote_operator_trajectory;
 
   rclcpp::Subscription<adore_ros2_msgs::msg::RemoteOperationStatus>::SharedPtr subscriber_remote_operation_status;
@@ -119,7 +121,8 @@ private:
   std::optional<math::Polygon2d> latest_managed_zone;
 
   dynamics::TrafficParticipantSet traffic_participants;
-  math::Polygon2d unstructured_drivable_area; // @TODO, make either optional or a hashmap
+  std::optional<math::Polygon2d> unstructured_drivable_area;
+  std::optional<adore_ros2_msgs::msg::GoalPoint> latest_evacuation_point;
 
   std::optional<adore_ros2_msgs::msg::RemoteOperationStatus> remote_operation_status;
  

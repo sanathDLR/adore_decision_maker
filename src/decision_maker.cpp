@@ -318,6 +318,9 @@ void DecisionMaker::setup_subscribers()
   subscriber_weather = create_subscription<adore_ros2_msgs::msg::Weather>( "weather", 1,
                                       [this](const adore_ros2_msgs::msg::Weather& msg) {  latest_weather = msg; });
 
+  subscriber_evacuation_point = create_subscription<adore_ros2_msgs::msg::GoalPoint>("mission/evacuation_point", 1, 
+                                      [this](const adore_ros2_msgs::msg::GoalPoint& msg) { latest_evacuation_point = msg; });
+
   subscriber_suggested_remote_operator_trajectory = create_subscription<adore_ros2_msgs::msg::Trajectory>( "suggested_remote_operator_trajectory", 1,
                                       [this](const adore_ros2_msgs::msg::Trajectory& msg) { 
 
@@ -385,7 +388,7 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
   bool needs_to_avoid_safety_corridor = conditions::needs_to_avoid_safety_corridor(latest_vehicle_state_dynamic, latest_safety_corridor);
   bool can_drive_managed = conditions::can_drive_managed(latest_vehicle_state_dynamic, time_now, latest_managed_zone, latest_managed_trajectory);
   bool odd_conditions_satisfied = conditions::odd_conditions_satisfied(latest_odd, time_now);
-  bool must_drive_unstructured = conditions::must_drive_unstructured( latest_vehicle_state_dynamic, unstructured_drivable_area );
+  bool must_drive_unstructured = conditions::must_drive_unstructured( latest_vehicle_state_dynamic, unstructured_drivable_area, latest_evacuation_point );
   bool remote_operation_is_available = conditions::remote_operations_is_available( remote_operation_status, time_now );
   bool passenger_wants_vehicle_to_stand_still = conditions::passenger_wants_vehicle_to_stop( passenger_emergency_stop, resume_ride_requested, time_now );
 
@@ -429,6 +432,7 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
                                 latest_vehicle_state_dynamic.value(),
                                 latest_route.value(),
                                 traffic_participants,
+                                latest_evacuation_point.value(),
                                 unstructured_drivable_area
     );
   }

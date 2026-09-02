@@ -102,15 +102,22 @@ bool odd_conditions_satisfied(
 }
 
 bool must_drive_unstructured( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, 
-                             const math::Polygon2d& unstructured_drivable_area )
+                             const std::optional<math::Polygon2d>& unstructured_drivable_area,
+                             const std::optional<adore_ros2_msgs::msg::GoalPoint>& evacuation_point )
 {
     if( !vehicle_state_dynamic.has_value() )
         return false;
 
-    if( vehicle_state_dynamic.value().vx < 0.1 && !unstructured_drivable_area.point_inside( vehicle_state_dynamic.value() ) )
-        return false;
-    
-    return unstructured_drivable_area.points.size() > 2;
+    if( evacuation_point.has_value() )
+        return true;
+
+    if( unstructured_drivable_area.has_value() )
+    {
+        if( vehicle_state_dynamic.value().vx < 0.1 && !unstructured_drivable_area.value().point_inside( vehicle_state_dynamic.value() ) )
+            return false;
+        return unstructured_drivable_area.value().points.size() > 2;
+    }    
+    return false;
 }
 
 bool remote_operations_is_available( const std::optional<adore_ros2_msgs::msg::RemoteOperationStatus>& remote_operation_status, const double& time_now )
