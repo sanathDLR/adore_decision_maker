@@ -74,7 +74,6 @@ namespace behavior
                                 const dynamics::VehicleStateDynamic& vehicle_state_dynamic,
                                 const map::Route& route,
                                 const dynamics::TrafficParticipantSet& traffic_participants,
-                                const adore_ros2_msgs::msg::GoalPoint& evacuation_point,
                                 const std::optional<math::Polygon2d>& drivable_area 
     );
 

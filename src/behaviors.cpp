@@ -149,17 +149,14 @@ namespace behavior
                                 const dynamics::VehicleStateDynamic& vehicle_state_dynamic,
                                 const map::Route& route,
                                 const dynamics::TrafficParticipantSet& traffic_participants,
-                                const adore_ros2_msgs::msg::GoalPoint& evacuation_point,
                                 const std::optional<math::Polygon2d>& drivable_area
                            )
     {
         Behavior trajectory_and_signal;
 
-        planner.set_goal( 605050.90, 5795017.68 );
-        std::cerr << "evacuation point x: " << evacuation_point.x_position << " y: " << evacuation_point.y_position << std::setprecision(16) << std::endl;
         rclcpp::Clock clock;
         double now_time = clock.now().seconds();
-        auto                 result             = planner.plan_trajectory( vehicle_state_dynamic, traffic_participants, std::nullopt );
+        auto                 result             = planner.plan_trajectory( vehicle_state_dynamic, traffic_participants, std::nullopt, route );
         if( !result.trajectory.has_value() )
         {
             std::cerr << "no trajectory planned to reach the goal" << std::endl;
@@ -168,7 +165,7 @@ namespace behavior
         }
         dynamics::Trajectory planned_trajectory = result.trajectory.value();
         planned_trajectory.adjust_start_time( vehicle_state_dynamic.time );
-        planned_trajectory.label = "Unstructured Planner";
+        planned_trajectory.label = "remote operations (unstrutured planner)";
         trajectory_and_signal.modified_route = map::conversions::to_ros_msg( result.modified_route );
         trajectory_and_signal.trajectory = dynamics::conversions::to_ros_msg( planned_trajectory );
 

@@ -4,7 +4,7 @@
     # Public baseline parameters
     # --------------------------------------------------------------------------
 
-    obstacle_avoidance.enabled: true
+    obstacle_avoidance.enabled: false
 
     # Object detection
     obstacle_avoidance.max_object_ahead: 60.0

@@ -78,6 +78,7 @@ private:
   rclcpp::Subscription<adore_ros2_msgs::msg::CautionZone>::SharedPtr subscriber_caution_zones;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_remote_operator_drive_approval;
   rclcpp::Subscription<adore_ros2_msgs::msg::GoalPoint>::SharedPtr subscriber_evacuation_point;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_can_drive_unstructured;
   rclcpp::Subscription<adore_ros2_msgs::msg::Trajectory>::SharedPtr subscriber_suggested_remote_operator_trajectory;
 
   rclcpp::Subscription<adore_ros2_msgs::msg::RemoteOperationStatus>::SharedPtr subscriber_remote_operation_status;
@@ -111,6 +112,8 @@ private:
   std::optional<dynamics::Trajectory> suggested_remote_operator_trajectory; // A trajectory received by a remote operator
   bool passenger_emergency_stop = false;
   bool resume_ride_requested = false;
+  bool driving_unstructured = false;
+  bool can_drive_unstructured = false;
   std::optional<adore_ros2_msgs::msg::SafetyCorridor> latest_safety_corridor;
   std::optional<dynamics::Trajectory> latest_reference_trajectory;
   std::optional<open_odd_ros2_msgs::msg::OddEvaluation> latest_odd;

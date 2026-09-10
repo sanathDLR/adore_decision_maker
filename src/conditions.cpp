@@ -101,22 +101,58 @@ bool odd_conditions_satisfied(
     return odd.value().match;
 }
 
-bool must_drive_unstructured( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic, 
-                             const std::optional<math::Polygon2d>& unstructured_drivable_area,
-                             const std::optional<adore_ros2_msgs::msg::GoalPoint>& evacuation_point )
+bool must_drive_unstructured(
+                const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
+                const std::optional<map::Route>& route,
+                const dynamics::TrafficParticipantSet& traffic_participants )
 {
-    if( !vehicle_state_dynamic.has_value() )
+    if( !vehicle_state_dynamic.has_value() || !route.has_value() )
         return false;
-
-    if( evacuation_point.has_value() )
-        return true;
-
-    if( unstructured_drivable_area.has_value() )
+    
+    bool lane_blocked = false;
+    double s_curr = route.value().get_s( vehicle_state_dynamic.value() );
+    double object_distance = std::numeric_limits<double>::max();
+    for( const auto& [id, participant] : traffic_participants.participants )
     {
-        if( vehicle_state_dynamic.value().vx < 0.1 && !unstructured_drivable_area.value().point_inside( vehicle_state_dynamic.value() ) )
-            return false;
-        return unstructured_drivable_area.value().points.size() > 2;
-    }    
+      auto state = participant.state;
+      if( state.vx > 0.2 )
+        continue;
+
+      double obj_s = route.value().get_s( state );
+
+      double offset = adore::math::distance_2d( state, route.value().get_pose_at_s( obj_s ) );
+
+      if( offset > 1.5 )
+        continue;
+
+      if( obj_s > s_curr )
+      {
+        double distance = obj_s - s_curr;
+
+        if( distance < object_distance )
+        {
+          object_distance = distance;
+        }
+      }
+    }
+    std::cerr << "object distance: " << object_distance << std::endl;
+    
+    if( object_distance < 10.0 )
+        lane_blocked = true;
+    return lane_blocked;
+}
+
+bool keep_unstructured( const bool& driving_unstructured, 
+                        const std::optional<map::Route>& route, 
+                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic )
+{
+    if( !vehicle_state_dynamic.has_value() || !route.has_value() )
+        return false;
+    
+    double s_curr = route.value().get_s( vehicle_state_dynamic.value() );
+    double ego_offset = adore::math::distance_2d( vehicle_state_dynamic.value(), route.value().get_pose_at_s( s_curr ) );
+    if( driving_unstructured && ego_offset > 0.1 && vehicle_state_dynamic.value().vx > 0.5 )
+        return true;
     return false;
 }
 
