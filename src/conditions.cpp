@@ -135,23 +135,56 @@ bool must_drive_unstructured(
         }
       }
     }
-    std::cerr << "object distance: " << object_distance << std::endl;
+    // std::cerr << "object distance: " << object_distance << std::endl;
     
-    if( object_distance < 10.0 )
+    if( object_distance < 25.0 && vehicle_state_dynamic.value().vx < 0.1 )
         lane_blocked = true;
     return lane_blocked;
 }
 
-bool keep_unstructured( const bool& driving_unstructured, 
+bool keep_unstructured( bool& driving_unstructured, 
                         const std::optional<map::Route>& route, 
-                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic )
+                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
+                        const dynamics::TrafficParticipantSet& traffic_participants )
 {
     if( !vehicle_state_dynamic.has_value() || !route.has_value() )
         return false;
     
     double s_curr = route.value().get_s( vehicle_state_dynamic.value() );
     double ego_offset = adore::math::distance_2d( vehicle_state_dynamic.value(), route.value().get_pose_at_s( s_curr ) );
-    if( driving_unstructured && ego_offset > 0.1 && vehicle_state_dynamic.value().vx > 0.5 )
+
+    bool lane_blocked = false;
+    double object_distance = std::numeric_limits<double>::max();
+    for( const auto& [id, participant] : traffic_participants.participants )
+    {
+      auto state = participant.state;
+      if( state.vx > 0.2 )
+        continue;
+
+      double obj_s = route.value().get_s( state );
+
+      double offset = adore::math::distance_2d( state, route.value().get_pose_at_s( obj_s ) );
+
+      if( offset > 1.5 )
+        continue;
+
+      if( obj_s > s_curr )
+      {
+        double distance = obj_s - s_curr;
+
+        if( distance < object_distance )
+        {
+          object_distance = distance;
+        }
+      }
+    }
+    std::cerr << "object distance: " << object_distance << std::endl;
+    if( object_distance < 25.0 )
+        lane_blocked = true;
+    
+    if( driving_unstructured && lane_blocked )
+        return true;
+    if( driving_unstructured && (ego_offset > 0.1) && (vehicle_state_dynamic.value().vx > 0.5) )
         return true;
     return false;
 }

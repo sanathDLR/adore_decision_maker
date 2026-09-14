@@ -318,11 +318,8 @@ void DecisionMaker::setup_subscribers()
   subscriber_weather = create_subscription<adore_ros2_msgs::msg::Weather>( "weather", 1,
                                       [this](const adore_ros2_msgs::msg::Weather& msg) {  latest_weather = msg; });
 
-  subscriber_evacuation_point = create_subscription<adore_ros2_msgs::msg::GoalPoint>("mission/evacuation_point", 1, 
-                                      [this](const adore_ros2_msgs::msg::GoalPoint& msg) { latest_evacuation_point = msg; });
-
   subscriber_can_drive_unstructured = create_subscription<std_msgs::msg::Bool>("can_drive_unstructured", 1, 
-                                      [this](const std_msgs::msg::Bool& msg) { can_drive_unstructured = msg.data; });
+                                      [this](const std_msgs::msg::Bool& msg) { can_drive_unstructured = msg.data; keep_unstructured = true; driving_unstructured = true; });
 
   subscriber_suggested_remote_operator_trajectory = create_subscription<adore_ros2_msgs::msg::Trajectory>( "suggested_remote_operator_trajectory", 1,
                                       [this](const adore_ros2_msgs::msg::Trajectory& msg) { 
@@ -392,7 +389,7 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
   bool can_drive_managed = conditions::can_drive_managed(latest_vehicle_state_dynamic, time_now, latest_managed_zone, latest_managed_trajectory);
   bool odd_conditions_satisfied = conditions::odd_conditions_satisfied(latest_odd, time_now);
   bool drive_unstructured = conditions::must_drive_unstructured( latest_vehicle_state_dynamic, latest_route, traffic_participants );
-  bool keep_unstructured = conditions::keep_unstructured( driving_unstructured, latest_route, latest_vehicle_state_dynamic );
+  keep_unstructured = conditions::keep_unstructured( driving_unstructured, latest_route, latest_vehicle_state_dynamic, traffic_participants );
   bool remote_operation_is_available = conditions::remote_operations_is_available( remote_operation_status, time_now );
   bool passenger_wants_vehicle_to_stand_still = conditions::passenger_wants_vehicle_to_stop( passenger_emergency_stop, resume_ride_requested, time_now );
 
@@ -427,26 +424,29 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
   }
 
   if (
-    drive_unstructured
-  )
+      drive_unstructured && 
+      !can_drive_unstructured
+    )
   {
-    adore::behavior::Behavior trajectory_and_signal = behavior::driving_mission(
-                                planner,
+    adore::behavior::Behavior trajectory_and_signal = behavior::driving_unstructured(
+                                unstructured_planner,
                                 latest_vehicle_state_dynamic.value(),
                                 latest_route.value(),
                                 traffic_participants,
-                                comfort_settings,
-                                traffic_signals,
-                                latest_weather,
-                                obstacle_avoidance_params,
-                                active_avoidance_state
-                              );
+                                unstructured_drivable_area);
     trajectory_and_signal.trajectory.label = "remote operations (waiting for approval for unstructured driving)";
+
+    for( int i=0; i<trajectory_and_signal.trajectory.states.size(); i++ )
+    {
+      trajectory_and_signal.trajectory.states[i].vx = 0.0;
+      trajectory_and_signal.trajectory.states[i].ax = 0.0;
+    }
+    
     return trajectory_and_signal;
   }
 
   if ( 
-      can_drive_unstructured ||
+      can_drive_unstructured &&
       keep_unstructured 
     )
   {
@@ -499,6 +499,7 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
   )
   {
     driving_unstructured = false;
+    can_drive_unstructured = false;
     return behavior::driving_mission(
                                 planner,
                                 latest_vehicle_state_dynamic.value(),

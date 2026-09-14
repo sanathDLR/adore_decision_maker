@@ -45,9 +45,10 @@ namespace adore
         bool must_drive_unstructured( const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
                                       const std::optional<map::Route>& route,
                                       const dynamics::TrafficParticipantSet& traffic_participants );
-        bool keep_unstructured( const bool& driving_unstructured, 
+        bool keep_unstructured( bool& driving_unstructured, 
                                 const std::optional<map::Route>& route, 
-                                const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic );
+                                const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
+                                const dynamics::TrafficParticipantSet& traffic_participants );
         bool remote_operations_is_available( const std::optional<adore_ros2_msgs::msg::RemoteOperationStatus>& remote_operation_status, const double& time_now );
         bool passenger_wants_vehicle_to_stop( const bool& passenger_emergency_stop, const bool& resume_ride_requested, const double& time_now );
 

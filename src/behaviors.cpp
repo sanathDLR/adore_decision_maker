@@ -73,6 +73,14 @@ namespace behavior
             }
         }
 
+        dynamics::Trajectory trajectory = planner.plan_route_trajectory( route_with_signal, vehicle_state_dynamic, traffic_participants );
+        trajectory.adjust_start_time( vehicle_state_dynamic.time );
+        trajectory.label              = "driving mission";
+
+        Behavior trajectory_and_signal;
+        trajectory_and_signal.trajectory = dynamics::conversions::to_ros_msg( trajectory );
+        return trajectory_and_signal;
+
         // -------------------------------------------------------------------------
         // OA invariant:
         // The decision maker never publishes free-space emergency trajectories.
@@ -165,7 +173,7 @@ namespace behavior
         }
         dynamics::Trajectory planned_trajectory = result.trajectory.value();
         planned_trajectory.adjust_start_time( vehicle_state_dynamic.time );
-        planned_trajectory.label = "remote operations (unstrutured planner)";
+        planned_trajectory.label = "driving using unstrutured planner";
         trajectory_and_signal.modified_route = map::conversions::to_ros_msg( result.modified_route );
         trajectory_and_signal.trajectory = dynamics::conversions::to_ros_msg( planned_trajectory );
 
