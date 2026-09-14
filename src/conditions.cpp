@@ -101,7 +101,7 @@ bool odd_conditions_satisfied(
     return odd.value().match;
 }
 
-bool must_drive_unstructured(
+bool road_completely_blocked(
                 const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
                 const std::optional<map::Route>& route,
                 const dynamics::TrafficParticipantSet& traffic_participants )
@@ -139,54 +139,8 @@ bool must_drive_unstructured(
     
     if( object_distance < 25.0 && vehicle_state_dynamic.value().vx < 0.1 )
         lane_blocked = true;
+
     return lane_blocked;
-}
-
-bool keep_unstructured( bool& driving_unstructured, 
-                        const std::optional<map::Route>& route, 
-                        const std::optional<dynamics::VehicleStateDynamic>& vehicle_state_dynamic,
-                        const dynamics::TrafficParticipantSet& traffic_participants )
-{
-    if( !vehicle_state_dynamic.has_value() || !route.has_value() )
-        return false;
-    
-    double s_curr = route.value().get_s( vehicle_state_dynamic.value() );
-    double ego_offset = adore::math::distance_2d( vehicle_state_dynamic.value(), route.value().get_pose_at_s( s_curr ) );
-
-    bool lane_blocked = false;
-    double object_distance = std::numeric_limits<double>::max();
-    for( const auto& [id, participant] : traffic_participants.participants )
-    {
-      auto state = participant.state;
-      if( state.vx > 0.2 )
-        continue;
-
-      double obj_s = route.value().get_s( state );
-
-      double offset = adore::math::distance_2d( state, route.value().get_pose_at_s( obj_s ) );
-
-      if( offset > 1.5 )
-        continue;
-
-      if( obj_s > s_curr )
-      {
-        double distance = obj_s - s_curr;
-
-        if( distance < object_distance )
-        {
-          object_distance = distance;
-        }
-      }
-    }
-    std::cerr << "object distance: " << object_distance << std::endl;
-    if( object_distance < 25.0 )
-        lane_blocked = true;
-    
-    if( driving_unstructured && lane_blocked )
-        return true;
-    if( driving_unstructured && (ego_offset > 0.1) && (vehicle_state_dynamic.value().vx > 0.5) )
-        return true;
-    return false;
 }
 
 bool remote_operations_is_available( const std::optional<adore_ros2_msgs::msg::RemoteOperationStatus>& remote_operation_status, const double& time_now )
@@ -202,6 +156,11 @@ bool remote_operations_is_available( const std::optional<adore_ros2_msgs::msg::R
     }
 
     return true;
+}
+
+bool performing_remote_operator_instrcutions( const std::optional<dynamics::Trajectory>& suggested_remote_operator_trajectory, const bool& remote_operator_wants_unstructured_driving ) 
+{
+    return (suggested_remote_operator_trajectory.has_value() || remote_operator_wants_unstructured_driving);
 }
 
 bool passenger_wants_vehicle_to_stop( const bool& passenger_emergency_stop, const bool& resume_ride_requested, const double& time_now )

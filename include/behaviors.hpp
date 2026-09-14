@@ -92,10 +92,14 @@ namespace behavior
     
     Behavior remote_operations(
                                 planner::TrajectoryPlanner& planner,
+                                planner::HybridAStarPlanner& astar_planner,
                                 const dynamics::VehicleStateDynamic& vehicle_state_dynamic,  
                                 const map::Route& route,
                                 const dynamics::TrafficParticipantSet& traffic_participants,
-                                std::optional<dynamics::Trajectory>& suggested_remote_operator_trajectory
+                                std::optional<dynamics::Trajectory>& suggested_remote_operator_trajectory,
+                                bool& remote_operator_wants_unstructured_driving,
+                                const bool& odd_conditions_satisfied,
+                                const bool& road_blocked
     );
 
     dynamics::Trajectory get_alternative_trajectory_in_remote_operations(

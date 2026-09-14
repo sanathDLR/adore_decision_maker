@@ -319,7 +319,10 @@ void DecisionMaker::setup_subscribers()
                                       [this](const adore_ros2_msgs::msg::Weather& msg) {  latest_weather = msg; });
 
   subscriber_can_drive_unstructured = create_subscription<std_msgs::msg::Bool>("can_drive_unstructured", 1, 
-                                      [this](const std_msgs::msg::Bool& msg) { can_drive_unstructured = msg.data; keep_unstructured = true; driving_unstructured = true; });
+                                      [this](const std_msgs::msg::Bool& msg) { 
+                                        remote_operator_wants_unstructured_driving  = msg.data; 
+                                        std::cerr << "decision maker got a request to drive unstructured" << std::endl;
+                                      });
 
   subscriber_suggested_remote_operator_trajectory = create_subscription<adore_ros2_msgs::msg::Trajectory>( "suggested_remote_operator_trajectory", 1,
                                       [this](const adore_ros2_msgs::msg::Trajectory& msg) { 
@@ -388,9 +391,9 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
   bool needs_to_avoid_safety_corridor = conditions::needs_to_avoid_safety_corridor(latest_vehicle_state_dynamic, latest_safety_corridor);
   bool can_drive_managed = conditions::can_drive_managed(latest_vehicle_state_dynamic, time_now, latest_managed_zone, latest_managed_trajectory);
   bool odd_conditions_satisfied = conditions::odd_conditions_satisfied(latest_odd, time_now);
-  bool drive_unstructured = conditions::must_drive_unstructured( latest_vehicle_state_dynamic, latest_route, traffic_participants );
-  keep_unstructured = conditions::keep_unstructured( driving_unstructured, latest_route, latest_vehicle_state_dynamic, traffic_participants );
+  bool road_completely_blocked = conditions::road_completely_blocked( latest_vehicle_state_dynamic, latest_route, traffic_participants );
   bool remote_operation_is_available = conditions::remote_operations_is_available( remote_operation_status, time_now );
+  bool performing_remote_operator_instrcutions = conditions::performing_remote_operator_instrcutions( suggested_remote_operator_trajectory, remote_operator_wants_unstructured_driving);
   bool passenger_wants_vehicle_to_stand_still = conditions::passenger_wants_vehicle_to_stop( passenger_emergency_stop, resume_ride_requested, time_now );
 
   if (
@@ -423,56 +426,60 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
     );
   }
 
-  if (
-      drive_unstructured && 
-      !can_drive_unstructured
-    )
-  {
-    adore::behavior::Behavior trajectory_and_signal = behavior::driving_unstructured(
-                                unstructured_planner,
-                                latest_vehicle_state_dynamic.value(),
-                                latest_route.value(),
-                                traffic_participants,
-                                unstructured_drivable_area);
-    trajectory_and_signal.trajectory.label = "remote operations (waiting for approval for unstructured driving)";
+  // if (
+  //     drive_unstructured && 
+  //     !can_drive_unstructured
+  //   )
+  // {
+  //   adore::behavior::Behavior trajectory_and_signal = behavior::driving_unstructured(
+  //                               unstructured_planner,
+  //                               latest_vehicle_state_dynamic.value(),
+  //                               latest_route.value(),
+  //                               traffic_participants,
+  //                               unstructured_drivable_area);
+  //   trajectory_and_signal.trajectory.label = "remote operations (waiting for approval for unstructured driving)";
 
-    for( int i=0; i<trajectory_and_signal.trajectory.states.size(); i++ )
-    {
-      trajectory_and_signal.trajectory.states[i].vx = 0.0;
-      trajectory_and_signal.trajectory.states[i].ax = 0.0;
-    }
+  //   for( int i=0; i<trajectory_and_signal.trajectory.states.size(); i++ )
+  //   {
+  //     trajectory_and_signal.trajectory.states[i].vx = 0.0;
+  //     trajectory_and_signal.trajectory.states[i].ax = 0.0;
+  //   }
     
-    return trajectory_and_signal;
-  }
+  //   return trajectory_and_signal;
+  // }
 
-  if ( 
-      can_drive_unstructured &&
-      keep_unstructured 
-    )
-  {
-    driving_unstructured = true;
-    return behavior::driving_unstructured(
-                                unstructured_planner,
-                                latest_vehicle_state_dynamic.value(),
-                                latest_route.value(),
-                                traffic_participants,
-                                unstructured_drivable_area
-    );
-  }
+  // if ( 
+  //     can_drive_unstructured &&
+  //     keep_unstructured 
+  //   )
+  // {
+  //   driving_unstructured = true;
+  //   return behavior::driving_unstructured(
+  //                               unstructured_planner,
+  //                               latest_vehicle_state_dynamic.value(),
+  //                               latest_route.value(),
+  //                               traffic_participants,
+  //                               unstructured_drivable_area
+  //   );
+  // }
 
   if (
       has_localization &&
       has_mission &&
-      !odd_conditions_satisfied &&
+      (!odd_conditions_satisfied || road_completely_blocked || performing_remote_operator_instrcutions ) &&
       remote_operation_is_available 
     )
   {
     return behavior::remote_operations(
                                 planner,
+                                unstructured_planner,
                                 latest_vehicle_state_dynamic.value(),
                                 latest_route.value(),
                                 traffic_participants,
-                                suggested_remote_operator_trajectory
+                                suggested_remote_operator_trajectory,
+                                remote_operator_wants_unstructured_driving,
+                                odd_conditions_satisfied,
+                                road_completely_blocked
     );
   }
 
@@ -498,8 +505,8 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
       odd_conditions_satisfied
   )
   {
-    driving_unstructured = false;
-    can_drive_unstructured = false;
+    // driving_unstructured = false;
+    // can_drive_unstructured = false;
     return behavior::driving_mission(
                                 planner,
                                 latest_vehicle_state_dynamic.value(),

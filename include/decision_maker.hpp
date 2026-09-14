@@ -111,9 +111,9 @@ private:
   std::optional<dynamics::Trajectory> suggested_remote_operator_trajectory; // A trajectory received by a remote operator
   bool passenger_emergency_stop = false;
   bool resume_ride_requested = false;
-  bool driving_unstructured = true;
-  bool can_drive_unstructured = false;
-  bool keep_unstructured = false;
+  // bool driving_unstructured = true;
+  bool remote_operator_wants_unstructured_driving = false;
+  // bool keep_unstructured = false;
   std::optional<adore_ros2_msgs::msg::SafetyCorridor> latest_safety_corridor;
   std::optional<dynamics::Trajectory> latest_reference_trajectory;
   std::optional<open_odd_ros2_msgs::msg::OddEvaluation> latest_odd;

@@ -173,7 +173,7 @@ namespace behavior
         }
         dynamics::Trajectory planned_trajectory = result.trajectory.value();
         planned_trajectory.adjust_start_time( vehicle_state_dynamic.time );
-        planned_trajectory.label = "driving using unstrutured planner";
+        planned_trajectory.label = "remote operations (driving remote operator unstructured command)";
         trajectory_and_signal.modified_route = map::conversions::to_ros_msg( result.modified_route );
         trajectory_and_signal.trajectory = dynamics::conversions::to_ros_msg( planned_trajectory );
 
@@ -213,13 +213,18 @@ namespace behavior
 
     Behavior remote_operations(
                                 planner::TrajectoryPlanner& planner,
+                                planner::HybridAStarPlanner& astar_planner,
                                 const dynamics::VehicleStateDynamic& vehicle_state_dynamic,  
                                 const map::Route& route,
                                 const dynamics::TrafficParticipantSet& traffic_participants,
-                                std::optional<dynamics::Trajectory>& suggested_remote_operator_trajectory
+                                std::optional<dynamics::Trajectory>& suggested_remote_operator_trajectory,
+                                bool& remote_operator_wants_unstructured_driving,
+                                const bool& odd_conditions_satisfied,
+                                const bool& road_blocked
     )
     {
         Behavior trajectory_and_signals;
+
 
         if ( suggested_remote_operator_trajectory.has_value() )
         {
@@ -231,7 +236,7 @@ namespace behavior
                     adore::math::distance_2d(trajectory.states.back(), vehicle_state_dynamic) > MAX_DISTANCE_TO_LAST_TRAJECTORY_POINT_BEFORE_RETURNING_TO_REMOTE_OPERATIONS_DRIVING
                 )
                 {
-                    trajectory.label              = "remote operations (driving remote operator instructions)";
+                    trajectory.label              = "remote operations (driving remote operator trajectory)";
                     trajectory_and_signals.trajectory = dynamics::conversions::to_ros_msg(trajectory);
 
                     return trajectory_and_signals;
@@ -242,6 +247,34 @@ namespace behavior
             }
         }
 
+        if ( remote_operator_wants_unstructured_driving )
+        {
+            double s_curr = route.get_s( vehicle_state_dynamic );
+            double ego_vehicle_offset_to_lane_center = adore::math::distance_2d( vehicle_state_dynamic, route.get_pose_at_s( s_curr ) );
+
+            std::cerr << "state of values: remote_operator_wants_unstructured_driving: " << remote_operator_wants_unstructured_driving << ", road_blocked: " << road_blocked << ", offset: " << std::to_string(ego_vehicle_offset_to_lane_center) << std::endl;
+
+            if ( !road_blocked && ego_vehicle_offset_to_lane_center < 0.1 )
+            {
+                remote_operator_wants_unstructured_driving = false;
+                std::cerr << "entered here!" << std::endl;
+            }
+
+            return driving_unstructured(astar_planner, vehicle_state_dynamic, route, traffic_participants, {});
+        }
+
+        std::string remote_operation_reason_affix;
+
+        if ( !odd_conditions_satisfied )
+        {
+            remote_operation_reason_affix = "ODD failure";
+        }
+
+        if ( road_blocked )
+        {
+            remote_operation_reason_affix = "road blocked";
+        }
+
         trajectory_and_signals = minimum_risk(
             planner,
             vehicle_state_dynamic,
@@ -249,9 +282,9 @@ namespace behavior
             traffic_participants,
             {}
         );
-        trajectory_and_signals.trajectory.label = "remote operations (waiting for remote operator instructions)";
+        trajectory_and_signals.trajectory.label = "remote operations : " + remote_operation_reason_affix + " - " + "(waiting for remote operator instructions)";
 
-        if ( vehicle_state_dynamic.vx < 0.5 ) // Should first send alternative trajectories when standing still
+        if ( vehicle_state_dynamic.vx < 0.5 && !road_blocked ) // Should first send alternative trajectories when standing still
         {
             trajectory_and_signals.alternative_trajectory = dynamics::conversions::to_ros_msg(
                                                                                               get_alternative_trajectory_in_remote_operations(
@@ -259,6 +292,11 @@ namespace behavior
                                                                                                   vehicle_state_dynamic, 
                                                                                                   route, 
                                                                                                   traffic_participants));
+        }
+        else if ( vehicle_state_dynamic.vx < 0.5 && road_blocked ) // Should first send alternative trajectories when standing still and needs unstructured driving
+        {
+            Behavior behavior = driving_unstructured(astar_planner, vehicle_state_dynamic, route, traffic_participants, {});
+            trajectory_and_signals.alternative_trajectory = behavior.trajectory;
         }
 
         return trajectory_and_signals;
