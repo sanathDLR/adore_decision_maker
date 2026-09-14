@@ -137,7 +137,8 @@ bool road_completely_blocked(
     }
     // std::cerr << "object distance: " << object_distance << std::endl;
     
-    if( object_distance < 25.0 && vehicle_state_dynamic.value().vx < 0.1 )
+    // if( object_distance < 25.0 && vehicle_state_dynamic.value().vx < 0.1 )
+    if( object_distance < 20.0 )
         lane_blocked = true;
 
     return lane_blocked;

@@ -296,7 +296,19 @@ namespace behavior
         else if ( vehicle_state_dynamic.vx < 0.5 && road_blocked ) // Should first send alternative trajectories when standing still and needs unstructured driving
         {
             Behavior behavior = driving_unstructured(astar_planner, vehicle_state_dynamic, route, traffic_participants, {});
-            trajectory_and_signals.alternative_trajectory = behavior.trajectory;
+            dynamics::Trajectory unstructured_trajectory;
+            if( behavior.modified_route.has_value() )
+            {
+                for( int i=0; i< behavior.modified_route.value().center_points.size(); i++ )
+                {
+                    dynamics::VehicleStateDynamic alternate_trajectory_state;
+                    alternate_trajectory_state.x = behavior.modified_route.value().center_points[i].x;
+                    alternate_trajectory_state.y = behavior.modified_route.value().center_points[i].y;
+                    unstructured_trajectory.states.push_back( alternate_trajectory_state );
+                }
+            }
+            trajectory_and_signals.alternative_trajectory = dynamics::conversions::to_ros_msg( unstructured_trajectory );
+            trajectory_and_signals.modified_route = behavior.modified_route;
         }
 
         return trajectory_and_signals;
