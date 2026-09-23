@@ -66,7 +66,8 @@ namespace behavior
                                 const adore_ros2_msgs::msg::TrafficSignals& traffic_signals,
                                 const std::optional<adore_ros2_msgs::msg::Weather>& weather,
                                 const planner::ObstacleAvoidanceParams& obstacle_avoidance_params,
-                                planner::ActiveAvoidanceState& active_avoidance_state
+                                planner::ActiveAvoidanceState& active_avoidance_state,
+                                const bool& must_evacuate
     );
 
     Behavior driving_unstructured(

@@ -176,5 +176,10 @@ bool passenger_wants_vehicle_to_stop( const bool& passenger_emergency_stop, cons
     return false;
 }
 
+bool is_evacuating( const bool& evacuation_is_active, const bool& odd_conditions_satisfied, const bool& road_comletely_blocked, const bool& driving_remote_operator_instructions )
+{
+    return evacuation_is_active && odd_conditions_satisfied && !road_comletely_blocked && !driving_remote_operator_instructions;
+}
+
 } // namespace conditions
 } // namespace adore

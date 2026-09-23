@@ -79,6 +79,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_remote_operator_drive_approval;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_can_drive_unstructured;
   rclcpp::Subscription<adore_ros2_msgs::msg::Trajectory>::SharedPtr subscriber_suggested_remote_operator_trajectory;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_driving_evacuation;
 
   rclcpp::Subscription<adore_ros2_msgs::msg::RemoteOperationStatus>::SharedPtr subscriber_remote_operation_status;
   // rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr       subscriber_automation_toggle;
@@ -113,6 +114,7 @@ private:
   bool resume_ride_requested = false;
   // bool driving_unstructured = true;
   bool remote_operator_wants_unstructured_driving = false;
+  bool driving_evacuation = false;
   // bool keep_unstructured = false;
   std::optional<adore_ros2_msgs::msg::SafetyCorridor> latest_safety_corridor;
   std::optional<dynamics::Trajectory> latest_reference_trajectory;

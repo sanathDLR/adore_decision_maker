@@ -349,6 +349,9 @@ void DecisionMaker::setup_subscribers()
 
   subscriber_remote_operation_status = create_subscription<adore_ros2_msgs::msg::RemoteOperationStatus>( "remote_operation_status", 1,
                                     [this](const adore_ros2_msgs::msg::RemoteOperationStatus& msg) {  remote_operation_status = msg; });
+
+  subscriber_driving_evacuation = create_subscription<std_msgs::msg::Bool>( "driving_evacuation", 1,
+                                    [this](const std_msgs::msg::Bool& msg) {  driving_evacuation = msg.data; });
 }
 
 void DecisionMaker::setup_publishers()
@@ -395,6 +398,7 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
   bool remote_operation_is_available = conditions::remote_operations_is_available( remote_operation_status, time_now );
   bool performing_remote_operator_instrcutions = conditions::performing_remote_operator_instrcutions( suggested_remote_operator_trajectory, remote_operator_wants_unstructured_driving);
   bool passenger_wants_vehicle_to_stand_still = conditions::passenger_wants_vehicle_to_stop( passenger_emergency_stop, resume_ride_requested, time_now );
+  bool must_evacuate = conditions::is_evacuating( driving_evacuation, odd_conditions_satisfied, road_completely_blocked, performing_remote_operator_instrcutions );
 
   if (
       has_localization &&
@@ -516,7 +520,8 @@ behavior::Behavior DecisionMaker::choose_and_plan_driving_behavior()
                                 traffic_signals,
                                 latest_weather,
                                 obstacle_avoidance_params,
-                                active_avoidance_state
+                                active_avoidance_state,
+                                must_evacuate
                               );
   }
 

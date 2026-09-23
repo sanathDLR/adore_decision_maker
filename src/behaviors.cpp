@@ -42,7 +42,8 @@ namespace behavior
             const adore_ros2_msgs::msg::TrafficSignals& traffic_signals,
             const std::optional<adore_ros2_msgs::msg::Weather>& weather,
             const planner::ObstacleAvoidanceParams& params_for_obstacle_avoidance,
-            planner::ActiveAvoidanceState& active_avoidance_state )
+            planner::ActiveAvoidanceState& active_avoidance_state,
+            const bool& must_evacuate )
     {
 
         planner.set_comfort_settings( comfort_settings );
@@ -75,7 +76,12 @@ namespace behavior
 
         dynamics::Trajectory trajectory = planner.plan_route_trajectory( route_with_signal, vehicle_state_dynamic, traffic_participants );
         trajectory.adjust_start_time( vehicle_state_dynamic.time );
+
         trajectory.label              = "driving mission";
+        if ( must_evacuate )
+        {
+            trajectory.label = "evacuate - driving mission";
+        }
 
         Behavior trajectory_and_signal;
         trajectory_and_signal.trajectory = dynamics::conversions::to_ros_msg( trajectory );
