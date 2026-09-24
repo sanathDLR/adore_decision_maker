@@ -27,6 +27,7 @@
 #include "adore_ros2_msgs/msg/weather.hpp"
 #include <adore_math/polygon.h>
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "adore_ros2_msgs/msg/passenger_request.hpp"
 #include <dynamics/comfort_settings.hpp>
 #include "adore_ros2_msgs/msg/mission_command.hpp"
@@ -95,7 +96,8 @@ private:
 
   rclcpp::Publisher<adore_ros2_msgs::msg::Trajectory>::SharedPtr publisher_trajectory_decision;
   rclcpp::Publisher<adore_ros2_msgs::msg::Trajectory>::SharedPtr publisher_alternative_trajectory_decision;
-    rclcpp::Publisher<adore_ros2_msgs::msg::Route>::SharedPtr publisher_modified_route;
+  rclcpp::Publisher<adore_ros2_msgs::msg::Route>::SharedPtr publisher_modified_route;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_decision_overview;
   rclcpp::Publisher<adore_ros2_msgs::msg::TrafficParticipant>::SharedPtr publisher_v2x_traffic_participant;
 
   // Planning

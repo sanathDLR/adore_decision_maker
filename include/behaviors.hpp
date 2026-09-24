@@ -50,8 +50,9 @@ namespace behavior
     {
         adore_ros2_msgs::msg::Trajectory trajectory;
         std::optional<adore_ros2_msgs::msg::Trajectory> alternative_trajectory;
-    std::optional<adore_ros2_msgs::msg::Route> modified_route;
+        std::optional<adore_ros2_msgs::msg::Route> modified_route;
         adore_ros2_msgs::msg::VehicleSignals signals;
+        std::string decision_overview;
     };
 
     const double MAX_DISTANCE_TO_LAST_TRAJECTORY_POINT_BEFORE_RETURNING_TO_REMOTE_OPERATIONS_DRIVING = 1.0;

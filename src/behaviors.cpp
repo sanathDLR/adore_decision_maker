@@ -171,9 +171,12 @@ namespace behavior
         rclcpp::Clock clock;
         double now_time = clock.now().seconds();
         auto                 result             = planner.plan_trajectory( vehicle_state_dynamic, traffic_participants, std::nullopt, route );
+        trajectory_and_signal.decision_overview = result.planner_message;
+        trajectory_and_signal.decision_overview += " time taken for unstructured planner: " + std::to_string( clock.now().seconds() - now_time );
         if( !result.trajectory.has_value() )
         {
-            std::cerr << "no trajectory planned to reach the goal" << std::endl;
+            // std::cerr << "no trajectory planned to reach the goal" << std::endl;
+            trajectory_and_signal.decision_overview += " no trajectory planned to reach the goal";
             planner::TrajectoryPlanner emergency_planner;
             return behavior::emergency( emergency_planner, vehicle_state_dynamic );
         }
@@ -258,12 +261,9 @@ namespace behavior
             double s_curr = route.get_s( vehicle_state_dynamic );
             double ego_vehicle_offset_to_lane_center = adore::math::distance_2d( vehicle_state_dynamic, route.get_pose_at_s( s_curr ) );
 
-            std::cerr << "state of values: remote_operator_wants_unstructured_driving: " << remote_operator_wants_unstructured_driving << ", road_blocked: " << road_blocked << ", offset: " << std::to_string(ego_vehicle_offset_to_lane_center) << std::endl;
-
             if ( !road_blocked && ego_vehicle_offset_to_lane_center < 0.1 )
             {
                 remote_operator_wants_unstructured_driving = false;
-                std::cerr << "entered here!" << std::endl;
             }
 
             return driving_unstructured(astar_planner, vehicle_state_dynamic, route, traffic_participants, {});

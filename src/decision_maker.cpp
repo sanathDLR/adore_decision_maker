@@ -358,7 +358,8 @@ void DecisionMaker::setup_publishers()
 {
   publisher_trajectory_decision = create_publisher<adore_ros2_msgs::msg::Trajectory>( "trajectory_decision", 1 );
   publisher_alternative_trajectory_decision = create_publisher<adore_ros2_msgs::msg::Trajectory>( "alternative_trajectory_decision", 1 );
-    publisher_modified_route = create_publisher<adore_ros2_msgs::msg::Route>( "modified_route", 1 );
+  publisher_modified_route = create_publisher<adore_ros2_msgs::msg::Route>( "modified_route", 1 );
+  publisher_decision_overview = create_publisher<std_msgs::msg::String>( "decision_overview", 1 );
   publisher_v2x_traffic_participant = create_publisher<adore_ros2_msgs::msg::TrafficParticipant>( "v2x_traffic_participant", 1 );
 }
 
@@ -366,6 +367,9 @@ void DecisionMaker::timer_callback()
 {
   auto behavior = choose_and_plan_driving_behavior();
   publisher_trajectory_decision->publish(behavior.trajectory);
+  std_msgs::msg::String decision_overview;
+  decision_overview.data = behavior.decision_overview;
+  publisher_decision_overview->publish(decision_overview);
     if ( behavior.modified_route.has_value() )
     {
         publisher_modified_route->publish( behavior.modified_route.value() );
